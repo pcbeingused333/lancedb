@@ -51,7 +51,14 @@ from lancedb.background_loop import LOOP
 from lancedb.arrow import AsyncRecordBatchReader
 from lancedb.db import AsyncConnection, DBConnection
 from lancedb.job import AsyncJob, Job
-from lancedb.listing import AsyncListing, Listing
+from lancedb.listing import (
+    AsyncListing,
+    AsyncNamespaceListing,
+    AsyncTableListing,
+    Listing,
+    NamespaceListing,
+    TableListing,
+)
 from lancedb.sql import AsyncQuery as AsyncSqlQuery
 from lancedb.sql import QueryDescription, QueryParameters
 from lance_namespace import (
@@ -60,8 +67,6 @@ from lance_namespace import (
     CreateNamespaceResponse,
     DescribeNamespaceResponse,
     DropNamespaceResponse,
-    ListNamespacesResponse,
-    ListTablesResponse,
     NamespaceExistsRequest,
     TableExistsRequest,
 )
@@ -817,7 +822,7 @@ class LanceNamespaceDBConnection(DBConnection):
         namespace_path: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: Optional[int] = None,
-    ) -> ListNamespacesResponse:
+    ) -> NamespaceListing:
         """
         List child namespaces under the given namespace.
 
@@ -834,12 +839,12 @@ class LanceNamespaceDBConnection(DBConnection):
 
         Returns
         -------
-        ListNamespacesResponse
+        NamespaceListing
             Response containing namespace names and optional page_token for pagination.
         """
         if namespace_path is None:
             namespace_path = []
-        return LOOP.run(
+        return NamespaceListing(
             self._inner.list_namespaces(
                 namespace_path=namespace_path, page_token=page_token, limit=limit
             )
@@ -986,7 +991,7 @@ class LanceNamespaceDBConnection(DBConnection):
         namespace_path: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: Optional[int] = None,
-    ) -> ListTablesResponse:
+    ) -> TableListing:
         """
         List all tables in this database with pagination support.
 
@@ -1003,12 +1008,12 @@ class LanceNamespaceDBConnection(DBConnection):
 
         Returns
         -------
-        ListTablesResponse
+        TableListing
             Response containing table names and optional page_token for pagination.
         """
         if namespace_path is None:
             namespace_path = []
-        return LOOP.run(
+        return TableListing(
             self._inner.list_tables(
                 namespace_path=namespace_path, page_token=page_token, limit=limit
             )
@@ -1411,12 +1416,12 @@ class AsyncLanceNamespaceDBConnection:
             namespace_path = []
         await self._inner.drop_all_tables(namespace_path=namespace_path)
 
-    async def list_namespaces(
+    def list_namespaces(
         self,
         namespace_path: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: Optional[int] = None,
-    ) -> ListNamespacesResponse:
+    ) -> AsyncNamespaceListing:
         """
         List child namespaces under the given namespace.
 
@@ -1433,12 +1438,12 @@ class AsyncLanceNamespaceDBConnection:
 
         Returns
         -------
-        ListNamespacesResponse
+        NamespaceListing
             Response containing namespace names and optional page_token for pagination.
         """
         if namespace_path is None:
             namespace_path = []
-        return await self._inner.list_namespaces(
+        return self._inner.list_namespaces(
             namespace_path=namespace_path, page_token=page_token, limit=limit
         )
 
@@ -1568,12 +1573,12 @@ class AsyncLanceNamespaceDBConnection:
         except TableNotFoundError:
             return False
 
-    async def list_tables(
+    def list_tables(
         self,
         namespace_path: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: Optional[int] = None,
-    ) -> ListTablesResponse:
+    ) -> AsyncTableListing:
         """
         List all tables in this database with pagination support.
 
@@ -1590,12 +1595,12 @@ class AsyncLanceNamespaceDBConnection:
 
         Returns
         -------
-        ListTablesResponse
+        TableListing
             Response containing table names and optional page_token for pagination.
         """
         if namespace_path is None:
             namespace_path = []
-        return await self._inner.list_tables(
+        return self._inner.list_tables(
             namespace_path=namespace_path, page_token=page_token, limit=limit
         )
 
